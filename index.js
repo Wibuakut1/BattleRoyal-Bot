@@ -1,16 +1,23 @@
+require('dotenv').config(); // Mengimpor dotenv untuk membaca file .env
 const { Client, GatewayIntentBits, Collection } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 const { initDB } = require('./utils/db');
 
+// Membuat instance client Discord
 const client = new Client({
-  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildMessageReactions],
+  intents: [
+    GatewayIntentBits.Guilds, 
+    GatewayIntentBits.GuildMessages, 
+    GatewayIntentBits.MessageContent, 
+    GatewayIntentBits.GuildMessageReactions
+  ],
   partials: ['MESSAGE', 'CHANNEL', 'REACTION']
 });
 
 client.commands = new Collection();
 
-// Load commands
+// Load commands dari folder 'commands'
 const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
 for (const file of commandFiles) {
   const command = require(`./commands/${file}`);
@@ -22,6 +29,7 @@ client.once('ready', () => {
   initDB();
 });
 
+// Menangani perintah yang diberikan dalam interaksi
 client.on('interactionCreate', async interaction => {
   if (!interaction.isCommand()) return;
   const command = client.commands.get(interaction.commandName);
@@ -34,6 +42,7 @@ client.on('interactionCreate', async interaction => {
   }
 });
 
+// Menangani reaksi yang diberikan pengguna
 const { handleReactionJoin } = require('./utils/battleEngine');
 client.on('messageReactionAdd', async (reaction, user) => {
   if (user.bot) return;
@@ -42,4 +51,6 @@ client.on('messageReactionAdd', async (reaction, user) => {
   handleReactionJoin(reaction, user);
 });
 
+// Login menggunakan token yang disimpan di file .env
+console.log("Token yang digunakan:", process.env.TOKEN ? "Ditemukan" : "TIDAK ADA!");
 client.login(process.env.TOKEN);
