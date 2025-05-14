@@ -13,8 +13,8 @@ for (const file of commandFiles) {
 const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
 
 // Ganti CLIENT_ID dan GUILD_ID
-const CLIENT_ID = 'ID_CLIENT_DISCORD_KAMU';
-const GUILD_ID = 'ID_SERVER_DISCORD_KAMU';
+const CLIENT_ID = '909807762517680158';
+const GUILD_ID = '1241270946086654005';
 
 (async () => {
   try {
