@@ -5,8 +5,7 @@
   "dependencies": {
     "discord.js": "^14.13.0",
     "better-sqlite3": "^8.3.0",
-    "dotenv": "^10.0.0"  // Menambahkan dotenv di sini
-  },
+    "dotenv": "^10.0.0",
   "scripts": {
     "start": "node index.js"
   }
