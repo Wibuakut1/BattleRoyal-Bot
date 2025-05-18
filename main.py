@@ -1,11 +1,12 @@
-from telegram.ext import Updater, CommandHandler
-from web3 import Web3
 import os
 from dotenv import load_dotenv
+from web3 import Web3
+from telegram import Update
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
 load_dotenv()
 
-# Ambil dari environment
+# Konfigurasi dari .env
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 PRIVATE_KEY = os.getenv("PRIVATE_KEY")
 SENDER_ADDRESS = os.getenv("SENDER_ADDRESS")
@@ -15,7 +16,7 @@ AMOUNT_TO_SEND = float(os.getenv("AMOUNT_TO_SEND", "0.001"))
 
 web3 = Web3(Web3.HTTPProvider(PHAROS_RPC))
 
-def send_native_phrs(update, context):
+async def send_native_phrs(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         recipient = context.args[0]
         value = web3.to_wei(AMOUNT_TO_SEND, 'ether')
@@ -30,12 +31,11 @@ def send_native_phrs(update, context):
         }
         signed_tx = web3.eth.account.sign_transaction(tx, PRIVATE_KEY)
         tx_hash = web3.eth.send_raw_transaction(signed_tx.rawTransaction)
-        update.message.reply_text(f"PHRS dikirim!\nTX Hash:\n{web3.to_hex(tx_hash)}")
+        await update.message.reply_text(f"PHRS dikirim!\nTX Hash:\n{web3.to_hex(tx_hash)}")
     except Exception as e:
-        update.message.reply_text(f"Gagal: {str(e)}")
+        await update.message.reply_text(f"Gagal: {str(e)}")
 
-updater = Updater(TELEGRAM_TOKEN)
-dp = updater.dispatcher
-dp.add_handler(CommandHandler("send", send_native_phrs))
-updater.start_polling()
-updater.idle()
+if __name__ == "__main__":
+    app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
+    app.add_handler(CommandHandler("send", send_native_phrs))
+    app.run_polling()
