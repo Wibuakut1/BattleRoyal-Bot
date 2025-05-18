@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 from web3 import Web3
-from telegram import Update
+from telegram import Update, Bot
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
 load_dotenv()
@@ -14,9 +14,7 @@ CHAIN_ID = int(os.getenv("CHAIN_ID", "688688"))
 AMOUNT_TO_SEND = float(os.getenv("AMOUNT_TO_SEND", "0.001"))
 
 web3 = Web3(Web3.HTTPProvider(PHAROS_RPC))
-
-# Pastikan sender checksum address
-sender = Web3.to_checksum_address(SENDER_ADDRESS)
+bot = Bot(token=TELEGRAM_TOKEN)  # Buat objek bot untuk hapus webhook
 
 async def send_native_phrs(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
@@ -31,7 +29,7 @@ async def send_native_phrs(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         recipient = Web3.to_checksum_address(raw_recipient)
         value = web3.to_wei(AMOUNT_TO_SEND, 'ether')
-        nonce = web3.eth.get_transaction_count(sender)
+        nonce = web3.eth.get_transaction_count(SENDER_ADDRESS)
 
         tx = {
             'to': recipient,
@@ -54,7 +52,7 @@ async def send_native_phrs(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def get_balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
-        balance_wei = web3.eth.get_balance(sender)
+        balance_wei = web3.eth.get_balance(SENDER_ADDRESS)
         balance_phrs = web3.from_wei(balance_wei, 'ether')
         await update.message.reply_text(f"Saldo wallet kamu: `{balance_phrs}` PHRS", parse_mode="Markdown")
     except Exception as e:
@@ -79,6 +77,9 @@ Perintah bot:
     await update.message.reply_text(help_text)
 
 if __name__ == "__main__":
+    # Hapus webhook dulu supaya tidak conflict saat polling
+    bot.delete_webhook()
+
     app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
     app.add_handler(CommandHandler("send", send_native_phrs))
     app.add_handler(CommandHandler("balance", get_balance))
