@@ -6,7 +6,6 @@ from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
 load_dotenv()
 
-# Konfigurasi dari .env
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 PRIVATE_KEY = os.getenv("PRIVATE_KEY")
 SENDER_ADDRESS = os.getenv("SENDER_ADDRESS")
@@ -18,21 +17,16 @@ web3 = Web3(Web3.HTTPProvider(PHAROS_RPC))
 
 async def send_native_phrs(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
-        # Pastikan ada argumen
         if not context.args:
             await update.message.reply_text("Format perintah:\n`/send 0xAlamatTujuan`", parse_mode="Markdown")
             return
 
         raw_recipient = context.args[0]
-
-        # Validasi address
         if not Web3.is_address(raw_recipient):
             await update.message.reply_text("Alamat tidak valid. Harus diawali `0x` dan memiliki 40 karakter hex.", parse_mode="Markdown")
             return
 
-        # Konversi ke checksum address
         recipient = Web3.to_checksum_address(raw_recipient)
-
         value = web3.to_wei(AMOUNT_TO_SEND, 'ether')
         nonce = web3.eth.get_transaction_count(SENDER_ADDRESS)
 
@@ -52,11 +46,40 @@ async def send_native_phrs(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"PHRS dikirim ke `{recipient}`\n\nTX Hash:\n`{web3.to_hex(tx_hash)}`",
             parse_mode="Markdown"
         )
-
     except Exception as e:
         await update.message.reply_text(f"Gagal: `{str(e)}`", parse_mode="Markdown")
+
+async def get_balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        balance_wei = web3.eth.get_balance(SENDER_ADDRESS)
+        balance_phrs = web3.from_wei(balance_wei, 'ether')
+        await update.message.reply_text(f"Saldo wallet kamu: `{balance_phrs}` PHRS", parse_mode="Markdown")
+    except Exception as e:
+        await update.message.reply_text(f"Gagal ambil saldo: `{str(e)}`", parse_mode="Markdown")
+
+async def get_gas_price(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        gas_price_wei = web3.eth.gas_price
+        gas_price_gwei = web3.from_wei(gas_price_wei, 'gwei')
+        await update.message.reply_text(f"Harga gas saat ini: `{gas_price_gwei}` Gwei", parse_mode="Markdown")
+    except Exception as e:
+        await update.message.reply_text(f"Gagal ambil gas price: `{str(e)}`", parse_mode="Markdown")
+
+async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    help_text = """
+Perintah bot:
+/send 0xAlamatTujuan - Kirim 0.001 PHRS ke alamat tujuan
+/balance - Cek saldo wallet pengirim
+/gas - Cek harga gas saat ini
+/help - Tampilkan pesan ini
+"""
+    await update.message.reply_text(help_text)
 
 if __name__ == "__main__":
     app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
     app.add_handler(CommandHandler("send", send_native_phrs))
+    app.add_handler(CommandHandler("balance", get_balance))
+    app.add_handler(CommandHandler("gas", get_gas_price))
+    app.add_handler(CommandHandler("help", help_command))
     app.run_polling()
+    
