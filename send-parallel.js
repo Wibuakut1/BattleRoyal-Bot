@@ -1,5 +1,6 @@
 require('dotenv').config();
 const { ethers } = require("ethers");
+const fs = require('fs');
 
 const RPC_URL = "https://testnet.dplabs-internal.com";
 const provider = new ethers.JsonRpcProvider(RPC_URL);
@@ -12,18 +13,16 @@ if (!PRIVATE_KEY) {
 
 const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
 
-const recipients = [
-  "0xAlamatTujuan1",
-  "0xAlamatTujuan2",
-  "0xAlamatTujuan3",
-  "0xAlamatTujuan4",
-  "0xAlamatTujuan5",
-  "0xAlamatTujuan6",
-  "0xAlamatTujuan7",
-  "0xAlamatTujuan8",
-  "0xAlamatTujuan9",
-  "0xAlamatTujuan10",
-];
+// Baca daftar alamat dari file recipients.txt
+const recipients = fs.readFileSync("recipients.txt", "utf-8")
+  .split("\n")
+  .map(line => line.trim())
+  .filter(addr => addr.length > 0 && addr.startsWith("0x"));
+
+function randomDelay() {
+  const ms = Math.floor(Math.random() * 1000) + 2000; // antara 2000-3000 ms
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 async function sendTx(recipient, nonce) {
   const tx = {
@@ -44,8 +43,19 @@ async function sendTx(recipient, nonce) {
 
 async function main() {
   let nonce = await provider.getTransactionCount(wallet.address);
-  const promises = recipients.map((addr, i) => sendTx(addr, nonce + i));
-  await Promise.all(promises);
+
+  for (let i = 0; i < recipients.length; i++) {
+    const recipient = recipients[i];
+    console.log(`Mengirim tx ke ${recipient} (nonce: ${nonce + i})`);
+    await sendTx(recipient, nonce + i);
+
+    if (i < recipients.length - 1) {
+      console.log("Tunggu 2-3 detik sebelum kirim berikutnya...");
+      await randomDelay();
+    }
+  }
+
+  console.log("Semua transaksi selesai dikirim.");
 }
 
 main();
