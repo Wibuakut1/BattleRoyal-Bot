@@ -3,7 +3,13 @@ const { Client, GatewayIntentBits } = require('discord.js');
 const { ethers } = require('ethers');
 const fs = require('fs');
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
+  ],
+});
 const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
 const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
 const OWNER_ID = '909807762517680158'; // Ganti dengan ID kamu
@@ -13,19 +19,35 @@ client.on('ready', () => {
 });
 
 client.on('messageCreate', async (message) => {
+  console.log(`Message from ${message.author.tag}: ${message.content}`);
+
+  if (message.author.bot) return; // Abaikan pesan dari bot lain
+
+  // Test command sederhana
+  if (message.content === '!ping') {
+    return message.reply('Pong!');
+  }
+
   if (!message.content.startsWith('!faucet')) return;
-  if (message.author.id !== OWNER_ID) return message.reply('Kamu tidak diizinkan menggunakan bot ini.');
+
+  if (message.author.id !== OWNER_ID) {
+    return message.reply('Kamu tidak diizinkan menggunakan bot ini.');
+  }
 
   const args = message.content.split(' ');
-  if (args.length !== 2) return message.reply('Gunakan format: `!faucet <alamat>`');
+  if (args.length !== 2) {
+    return message.reply('Gunakan format: `!faucet <alamat>`');
+  }
 
   const to = args[1];
-  if (!ethers.isAddress(to)) return message.reply('Alamat tidak valid.');
+  if (!ethers.isAddress(to)) {
+    return message.reply('Alamat tidak valid.');
+  }
 
   try {
     const tx = await wallet.sendTransaction({
       to,
-      value: ethers.parseEther("0.001")
+      value: ethers.parseEther('0.001'),
     });
     const log = `[${new Date().toISOString()}] ${message.author.tag} meminta token ke ${to} | Tx Hash: ${tx.hash}\n`;
     fs.appendFileSync('log.txt', log);
