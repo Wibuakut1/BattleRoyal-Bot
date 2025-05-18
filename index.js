@@ -6,7 +6,7 @@ const fs = require('fs');
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
 const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
-const OWNER_ID = 'YOUR_DISCORD_ID'; // Ganti dengan ID kamu
+const OWNER_ID = '909807762517680158'; // Ganti dengan ID kamu
 
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}`);
