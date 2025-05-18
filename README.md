@@ -7,6 +7,6 @@ Kirim 10 transaksi paralel dari 1 wallet ke 10 alamat berbeda.
 1. Clone repo dan install deps:
 
 ```bash
-git clone https://github.com/username/repo-name.git
-cd repo-name
+git clone https://github.com/Wibuakut1/pharossend
+cd pharossend
 npm install
