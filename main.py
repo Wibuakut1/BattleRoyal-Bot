@@ -15,6 +15,9 @@ AMOUNT_TO_SEND = float(os.getenv("AMOUNT_TO_SEND", "0.001"))
 
 web3 = Web3(Web3.HTTPProvider(PHAROS_RPC))
 
+# Pastikan sender checksum address
+sender = Web3.to_checksum_address(SENDER_ADDRESS)
+
 async def send_native_phrs(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         if not context.args:
@@ -28,7 +31,7 @@ async def send_native_phrs(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         recipient = Web3.to_checksum_address(raw_recipient)
         value = web3.to_wei(AMOUNT_TO_SEND, 'ether')
-        nonce = web3.eth.get_transaction_count(SENDER_ADDRESS)
+        nonce = web3.eth.get_transaction_count(sender)
 
         tx = {
             'to': recipient,
@@ -51,7 +54,7 @@ async def send_native_phrs(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def get_balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
-        balance_wei = web3.eth.get_balance(SENDER_ADDRESS)
+        balance_wei = web3.eth.get_balance(sender)
         balance_phrs = web3.from_wei(balance_wei, 'ether')
         await update.message.reply_text(f"Saldo wallet kamu: `{balance_phrs}` PHRS", parse_mode="Markdown")
     except Exception as e:
