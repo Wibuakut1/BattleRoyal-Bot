@@ -18,9 +18,24 @@ web3 = Web3(Web3.HTTPProvider(PHAROS_RPC))
 
 async def send_native_phrs(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
-        recipient = context.args[0]
+        # Pastikan ada argumen
+        if not context.args:
+            await update.message.reply_text("Format perintah:\n`/send 0xAlamatTujuan`", parse_mode="Markdown")
+            return
+
+        raw_recipient = context.args[0]
+
+        # Validasi address
+        if not Web3.is_address(raw_recipient):
+            await update.message.reply_text("Alamat tidak valid. Harus diawali `0x` dan memiliki 40 karakter hex.", parse_mode="Markdown")
+            return
+
+        # Konversi ke checksum address
+        recipient = Web3.to_checksum_address(raw_recipient)
+
         value = web3.to_wei(AMOUNT_TO_SEND, 'ether')
         nonce = web3.eth.get_transaction_count(SENDER_ADDRESS)
+
         tx = {
             'to': recipient,
             'value': value,
@@ -29,11 +44,17 @@ async def send_native_phrs(update: Update, context: ContextTypes.DEFAULT_TYPE):
             'nonce': nonce,
             'chainId': CHAIN_ID
         }
+
         signed_tx = web3.eth.account.sign_transaction(tx, PRIVATE_KEY)
         tx_hash = web3.eth.send_raw_transaction(signed_tx.rawTransaction)
-        await update.message.reply_text(f"PHRS dikirim!\nTX Hash:\n{web3.to_hex(tx_hash)}")
+
+        await update.message.reply_text(
+            f"PHRS dikirim ke `{recipient}`\n\nTX Hash:\n`{web3.to_hex(tx_hash)}`",
+            parse_mode="Markdown"
+        )
+
     except Exception as e:
-        await update.message.reply_text(f"Gagal: {str(e)}")
+        await update.message.reply_text(f"Gagal: `{str(e)}`", parse_mode="Markdown")
 
 if __name__ == "__main__":
     app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
